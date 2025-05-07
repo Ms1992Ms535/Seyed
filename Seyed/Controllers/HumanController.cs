@@ -36,24 +36,64 @@ namespace Seyed.Controllers
         public async Task<IActionResult> GetHuman()
 
         {
-            var data = await (
-                from h in _context.Humans
-                join c in _context.Clients       on h.HumanId equals c.RefId
-               join a in _context.Addresses     on c.ClientId equals a.ClientId //into addrGroup
-             //   from a in addrGroup
-             //      .Where(x => x.AddressTypeId == 1 && x.Active && !string.IsNullOrEmpty(x.Address1))
-             //       .OrderBy(x => x.Id)
-             //       .Take(1) // فقط اولین آدرس معتبر
-             //       .DefaultIfEmpty()
-                where h.HumanId > 116991 && h.HumanId < 117012 && a.AddressTypeId == 1
-                //  && c.Status == 1
-                select new
-                {
-                    h,
-                  c,
-                 Address = a.Address1
-                }
-            )
+            /*/ Linq
+                  var data = await (
+                      from h in _context.Humans
+                      join c in _context.Clients on h.HumanId equals c.RefId
+                      join a in _context.Addresses on c.ClientId equals a.ClientId //into addrGroup
+                 //   from a in addrGroup
+                 //      .Where(x => x.AddressTypeId == 1 && x.Active && !string.IsNullOrEmpty(x.Address1))
+                 //       .OrderBy(x => x.Id)
+                 //       .Take(1) // فقط اولین آدرس معتبر
+                 //       .DefaultIfEmpty()
+                      where h.HumanId > 116991 && h.HumanId < 117012 && a.AddressTypeId == 1
+                      //  && c.Status == 1
+                      select new
+                      {
+                          h,
+                          c,
+                          Address = a.Address1
+                      }
+                  )
+                  .AsNoTracking()
+                  .ToListAsync();
+
+
+                  var report = (
+                      from x in data
+                      select new HumanReportDto
+                      {
+                          HumanId = x.h.HumanId,
+                          HumanName = x.h.HumanName,
+                          Family = x.h.Family,
+                          FatherName = x.h.FatherName,
+                          RegNo = x.h.RegNo,
+                          NationalNo = x.h.NationalNo,
+                          RegPlace = x.h.RegPlace,
+                          Job = x.h.Job,
+                          BirthDate = ToPersianDate(x.h.BirthDate),
+                          CreateDate = ToPersianDate(x.h.CreateDate),
+                          Sex = x.h.Sex,
+                          Mobile = x.h.Mobile,
+                          ClientId = x.c.ClientId,
+                          CustomerNo = x.c.CustomerNo?.ToString(),
+                          Address = x.Address
+                      }
+                  ).ToList();
+                  return Ok(report);
+            */
+
+            // Lambda
+            var data = await _context.Humans
+            .Join(_context.Clients, h => h.HumanId, c => c.RefId, (h, c) => new { h, c })
+            .Join(_context.Addresses, hc => hc.c.ClientId, a => a.ClientId, (hc, a) => new { hc.h, hc.c, a })
+            .Where(x => x.h.HumanId > 116991 && x.h.HumanId <  117012 && x.a.AddressTypeId == 1)
+            .Select(x => new
+            {
+                h = x.h,
+                c = x.c,
+                Address = x.a.Address1
+            })
             .AsNoTracking()
             .ToListAsync();
 
@@ -71,13 +111,14 @@ namespace Seyed.Controllers
                 CreateDate = ToPersianDate(x.h.CreateDate),
                 Sex = x.h.Sex,
                 Mobile = x.h.Mobile,
-               ClientId = x.c.ClientId,
-               CustomerNo = x.c.CustomerNo?.ToString(),
-              Address = x.Address
+                ClientId = x.c.ClientId,
+                CustomerNo = x.c.CustomerNo?.ToString(),
+                Address = x.Address
             }).ToList();
-
             return Ok(report);
         }
+
+
         /* Include for Get
        {
            var data = await _context.Humans
@@ -123,7 +164,7 @@ namespace Seyed.Controllers
 
 
         [HttpPost("search")]
-          public async Task<IActionResult> Search([FromBody] HumanSearchDto searchModel)
+        public async Task<IActionResult> Search([FromBody] HumanSearchDto searchModel)
         /* Linq for Search */
         {
 
@@ -137,119 +178,119 @@ namespace Seyed.Controllers
                     .Where(hc => hc.Client.Status == 1)
                     .AsQueryable();
 
-                if (searchModel.HumanId.HasValue)
-                    query = query.Where(h => h.Human.HumanId == searchModel.HumanId.Value);
+            if (searchModel.HumanId.HasValue)
+                query = query.Where(h => h.Human.HumanId == searchModel.HumanId.Value);
 
-                if (!string.IsNullOrEmpty(searchModel.HumanName))
-                    query = query.Where(h => h.Human.HumanName.ToLower().Contains(searchModel.HumanName.Trim().ToLower()));
+            if (!string.IsNullOrEmpty(searchModel.HumanName))
+                query = query.Where(h => h.Human.HumanName.ToLower().Contains(searchModel.HumanName.Trim().ToLower()));
 
-                if (!string.IsNullOrEmpty(searchModel.Family))
-                    query = query.Where(h => h.Human.Family.Contains(searchModel.Family));
+            if (!string.IsNullOrEmpty(searchModel.Family))
+                query = query.Where(h => h.Human.Family.Contains(searchModel.Family));
 
-                if (!string.IsNullOrEmpty(searchModel.FatherName))
-                    query = query.Where(h => h.Human.FatherName.Contains(searchModel.FatherName));
+            if (!string.IsNullOrEmpty(searchModel.FatherName))
+                query = query.Where(h => h.Human.FatherName.Contains(searchModel.FatherName));
 
-                if (!string.IsNullOrEmpty(searchModel.RegNo))
-                    query = query.Where(h => h.Human.RegNo.Contains(searchModel.RegNo));
+            if (!string.IsNullOrEmpty(searchModel.RegNo))
+                query = query.Where(h => h.Human.RegNo.Contains(searchModel.RegNo));
 
-                if (!string.IsNullOrEmpty(searchModel.NationalNo))
-                    query = query.Where(h => h.Human.NationalNo.Contains(searchModel.NationalNo));
+            if (!string.IsNullOrEmpty(searchModel.NationalNo))
+                query = query.Where(h => h.Human.NationalNo.Contains(searchModel.NationalNo));
 
-                if (!string.IsNullOrEmpty(searchModel.RegPlace))
-                    query = query.Where(h => h.Human.RegPlace.Contains(searchModel.RegPlace));
+            if (!string.IsNullOrEmpty(searchModel.RegPlace))
+                query = query.Where(h => h.Human.RegPlace.Contains(searchModel.RegPlace));
 
-                if (!string.IsNullOrEmpty(searchModel.Job))
-                    query = query.Where(h => h.Human.Job.Contains(searchModel.Job));
+            if (!string.IsNullOrEmpty(searchModel.Job))
+                query = query.Where(h => h.Human.Job.Contains(searchModel.Job));
 
-                if (!string.IsNullOrEmpty(searchModel.BirthDate))
+            if (!string.IsNullOrEmpty(searchModel.BirthDate))
+            {
+                try
                 {
-                    try
-                    {
-                        var parts = searchModel.BirthDate.Split('/');
-                        int year = int.Parse(parts[0]);
-                        int month = int.Parse(parts[1]);
-                        int day = int.Parse(parts[2]);
-                        var pc = new PersianCalendar();
-                        var miladiDate = pc.ToDateTime(year, month, day, 0, 0, 0, 0);
-                        query = query.Where(h => h.Human.BirthDate.HasValue && h.Human.BirthDate.Value.Date == miladiDate.Date);
-                    }
-                    catch
-                    {
-                        return BadRequest("فرمت تاریخ شمسی نادرست است. لطفاً به این صورت وارد کنید YYYY/MM/DD");
-                    }
+                    var parts = searchModel.BirthDate.Split('/');
+                    int year = int.Parse(parts[0]);
+                    int month = int.Parse(parts[1]);
+                    int day = int.Parse(parts[2]);
+                    var pc = new PersianCalendar();
+                    var miladiDate = pc.ToDateTime(year, month, day, 0, 0, 0, 0);
+                    query = query.Where(h => h.Human.BirthDate.HasValue && h.Human.BirthDate.Value.Date == miladiDate.Date);
                 }
-
-                if (searchModel.Sex.HasValue)
-                    query = query.Where(h => h.Human.Sex == searchModel.Sex.Value);
-
-                if (!string.IsNullOrEmpty(searchModel.CreateDate))
+                catch
                 {
-                    try
-                    {
-                        var parts = searchModel.CreateDate.Split('/');
-                        int year = int.Parse(parts[0]);
-                        int month = int.Parse(parts[1]);
-                        int day = int.Parse(parts[2]);
-                        var pc = new PersianCalendar();
-                        var miladiDate = pc.ToDateTime(year, month, day, 0, 0, 0, 0);
-                        query = query.Where(h => h.Human.CreateDate.HasValue && h.Human.CreateDate.Value.Date == miladiDate.Date);
-                    }
-                    catch
-                    {
-                        return BadRequest("فرمت تاریخ شمسی نادرست است. لطفاً به این صورت وارد کنید YYYY/MM/DD");
-                    }
+                    return BadRequest("فرمت تاریخ شمسی نادرست است. لطفاً به این صورت وارد کنید YYYY/MM/DD");
                 }
+            }
 
-                if (!string.IsNullOrEmpty(searchModel.Mobile))
-                    query = query.Where(h => h.Human.Mobile.Contains(searchModel.Mobile));
+            if (searchModel.Sex.HasValue)
+                query = query.Where(h => h.Human.Sex == searchModel.Sex.Value);
 
-                if (searchModel.ClientId.HasValue)
-                    query = query.Where(h => h.Client.ClientId == searchModel.ClientId.Value);
-
-                var humanClients = await query.Take(20).AsNoTracking().ToListAsync();
-
-                var clientIds = humanClients.Select(h => h.Client.ClientId).ToList();
-
-                var addressList = await _context.Addresses
-                    .Where(ad => clientIds.Contains(ad.ClientId)
-                                 && ad.AddressTypeId == 1
-                                 && ad.Active
-                                 && !string.IsNullOrEmpty(ad.Address1))
-                    .ToListAsync();
-
-                var addressDict = addressList
-                    .GroupBy(ad => ad.ClientId)
-                    .ToDictionary(g => g.Key, g => g.First().Address1);
-
-                var result = humanClients.Select(h =>
+            if (!string.IsNullOrEmpty(searchModel.CreateDate))
+            {
+                try
                 {
-                    addressDict.TryGetValue(h.Client.ClientId, out var address);
+                    var parts = searchModel.CreateDate.Split('/');
+                    int year = int.Parse(parts[0]);
+                    int month = int.Parse(parts[1]);
+                    int day = int.Parse(parts[2]);
+                    var pc = new PersianCalendar();
+                    var miladiDate = pc.ToDateTime(year, month, day, 0, 0, 0, 0);
+                    query = query.Where(h => h.Human.CreateDate.HasValue && h.Human.CreateDate.Value.Date == miladiDate.Date);
+                }
+                catch
+                {
+                    return BadRequest("فرمت تاریخ شمسی نادرست است. لطفاً به این صورت وارد کنید YYYY/MM/DD");
+                }
+            }
 
-                    return new
-                    {
-                        h.Human.HumanId,
-                        h.Human.HumanName,
-                        h.Human.Family,
-                        h.Human.FatherName,
-                        h.Human.RegNo,
-                        h.Human.NationalNo,
-                        h.Human.RegPlace,
-                        h.Human.Job,
-                        BirthDate = h.Human.BirthDate.HasValue ? ToPersianDate(h.Human.BirthDate.Value) : "-",
-                        CreateDate = h.Human.CreateDate.HasValue ? ToPersianDate(h.Human.CreateDate.Value) : "-",
-                        Sex = h.Human.Sex ? "مرد" : "زن",
-                        h.Human.Mobile,
-                        h.Client.ClientId,
-                        CustomerNo = h.Client.CustomerNo?.ToString(),
-                        Address = address
-                    };
-                }).ToList();
+            if (!string.IsNullOrEmpty(searchModel.Mobile))
+                query = query.Where(h => h.Human.Mobile.Contains(searchModel.Mobile));
 
-                if (result.Count == 0)
-                    return NotFound("موردی با این مشخصات یافت نشد");
+            if (searchModel.ClientId.HasValue)
+                query = query.Where(h => h.Client.ClientId == searchModel.ClientId.Value);
 
-                return Ok(result);
-          }
+            var humanClients = await query.Take(20).AsNoTracking().ToListAsync();
+
+            var clientIds = humanClients.Select(h => h.Client.ClientId).ToList();
+
+            var addressList = await _context.Addresses
+                .Where(ad => clientIds.Contains(ad.ClientId)
+                             && ad.AddressTypeId == 1
+                             && ad.Active
+                             && !string.IsNullOrEmpty(ad.Address1))
+                .ToListAsync();
+
+            var addressDict = addressList
+                .GroupBy(ad => ad.ClientId)
+                .ToDictionary(g => g.Key, g => g.First().Address1);
+
+            var result = humanClients.Select(h =>
+            {
+                addressDict.TryGetValue(h.Client.ClientId, out var address);
+
+                return new
+                {
+                    h.Human.HumanId,
+                    h.Human.HumanName,
+                    h.Human.Family,
+                    h.Human.FatherName,
+                    h.Human.RegNo,
+                    h.Human.NationalNo,
+                    h.Human.RegPlace,
+                    h.Human.Job,
+                    BirthDate = h.Human.BirthDate.HasValue ? ToPersianDate(h.Human.BirthDate.Value) : "-",
+                    CreateDate = h.Human.CreateDate.HasValue ? ToPersianDate(h.Human.CreateDate.Value) : "-",
+                    Sex = h.Human.Sex ? "مرد" : "زن",
+                    h.Human.Mobile,
+                    h.Client.ClientId,
+                    CustomerNo = h.Client.CustomerNo?.ToString(),
+                    Address = address
+                };
+            }).ToList();
+
+            if (result.Count == 0)
+                return NotFound("موردی با این مشخصات یافت نشد");
+
+            return Ok(result);
+        }
 
         /* Include for Search
          * 
