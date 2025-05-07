@@ -166,3 +166,4 @@ C:\Users\m.ali\source\repos\Seyed\Seyed\obj\Debug\net8.0\refint\Seyed.dll
 C:\Users\m.ali\source\repos\Seyed\Seyed\obj\Debug\net8.0\Seyed.pdb
 C:\Users\m.ali\source\repos\Seyed\Seyed\obj\Debug\net8.0\Seyed.genruntimeconfig.cache
 C:\Users\m.ali\source\repos\Seyed\Seyed\obj\Debug\net8.0\ref\Seyed.dll
+C:\Users\m.ali\source\repos\Seyed\Seyed\obj\Debug\net8.0\Seyed.sourcelink.json

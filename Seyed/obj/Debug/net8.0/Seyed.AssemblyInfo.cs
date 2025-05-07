@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Seyed")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4efe13e4739aad63353544d3b24a5f79919881b4")]
 [assembly: System.Reflection.AssemblyProductAttribute("Seyed")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Seyed")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
