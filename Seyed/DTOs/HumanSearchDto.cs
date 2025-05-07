@@ -14,12 +14,11 @@
         public bool? Sex { get; set; }
         public string? CreateDate { get; set; }
         public string? Mobile { get; set; }
-
+        public string? CustomerNo { get; set; }
         public int? ClientId { get; set; }         
         public string? Address { get; set; }       
          //   public int? PageSize { get; set; } = 10;
          //   public int? PageNumber { get; set; } = 1;
-         //test
     }
 
 }
